@@ -56,11 +56,7 @@ class TBNDataSet(data.Dataset):
         spec = np.log(np.real(spec * np.conj(spec)) + eps)
         return spec
 
-    def _extract_sound_feature(self, record, idx):
-
-        centre_sec = (record.start_frame + idx) / self.fps
-        left_sec = centre_sec - 0.639
-        right_sec = centre_sec + 0.639
+    def _read_sound(self, record):
         audio_fname = record.untrimmed_video_name + '.wav'
         if not self.use_audio_dict:
             samples, sr = librosa.core.load(self.audio_path / audio_fname,
@@ -70,18 +66,35 @@ class TBNDataSet(data.Dataset):
             audio_fname = record.untrimmed_video_name
             samples = self.audio_path[audio_fname]
 
-        duration = samples.shape[0] / float(self.resampling_rate)
+        return samples
+        
+
+    def _extract_sound_feature(self, record, idx):
+
+        centre_sec = (record.start_frame + idx) / self.fps
+        left_sec = centre_sec - 0.639
+        right_sec = centre_sec + 0.639
+        # audio_fname = record.untrimmed_video_name + '.wav'
+        # if not self.use_audio_dict:
+        #     samples, sr = librosa.core.load(self.audio_path / audio_fname,
+        #                                     sr=None, mono=True)
+
+        # else:
+        #     audio_fname = record.untrimmed_video_name
+        #     samples = self.audio_path[audio_fname]
+
+        duration = self.aud_sample.shape[0] / float(self.resampling_rate)
 
         left_sample = int(round(left_sec * self.resampling_rate))
         right_sample = int(round(right_sec * self.resampling_rate))
 
         if left_sec < 0:
-            samples = samples[:int(round(self.resampling_rate * 1.279))]
+            samples = self.aud_sample[:int(round(self.resampling_rate * 1.279))]
 
         elif right_sec > duration:
-            samples = samples[-int(round(self.resampling_rate * 1.279)):]
+            samples = self.aud_sample[-int(round(self.resampling_rate * 1.279)):]
         else:
-            samples = samples[left_sample:right_sample]
+            samples = self.aud_sample[left_sample:right_sample]
 
         return self._log_specgram(samples)
 
@@ -140,6 +153,8 @@ class TBNDataSet(data.Dataset):
 
         input = {}
         record = self.video_list[index]
+
+        self.aud_sample = self._read_sound(record)
 
         for m in self.modality:
             if self.mode == 'train':

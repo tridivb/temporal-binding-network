@@ -16,3 +16,5 @@ sftp-config*.json
 *.pth
 *.q
 q.log
+__pycache__/
+.vscode/
