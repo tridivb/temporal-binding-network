@@ -12,3 +12,7 @@ sftp-config*.json
 *.o*
 *.err*
 .DS_Store
+*.tar
+*.pth
+*.q
+q.log

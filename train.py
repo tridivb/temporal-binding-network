@@ -99,8 +99,8 @@ def main():
     # Freeze batch normalisation layers except the first
     if args.partialbn:
         model.freeze_fn('partialbn_parameters')
-
-    model = torch.nn.DataParallel(model, device_ids=args.gpus).to(device)
+    
+    model = torch.nn.DataParallel(model, device_ids=None).to(device)
 
     cudnn.benchmark = True
 
@@ -198,12 +198,13 @@ def main():
                        image_tmpl,
                        visual_path=args.visual_path,
                        audio_path=args.audio_path,
-                       num_segments=args.num_segments,
+                       # num_segments=args.num_segments,
+                       num_segments=25,
                        mode='val',
                        transform=val_transform,
                        fps=args.fps,
                        resampling_rate=args.resampling_rate),
-            batch_size=args.batch_size, shuffle=False,
+            batch_size=8, shuffle=False,
             num_workers=args.workers, pin_memory=True)
 
     # define loss function (criterion) and optimizer
@@ -257,9 +258,10 @@ def main():
                               'train_noun_acc': np.zeros((args.epochs,))}
 
     for epoch in range(args.start_epoch, args.epochs):
-        scheduler.step()
+        # scheduler.step()
         # train for one epoch
         training_metrics = train(train_loader, model, criterion, optimizer, epoch, device)
+        scheduler.step()
         if args.save_stats:
             for k, v in training_metrics.items():
                 stats_dict[k][epoch] = v
@@ -327,6 +329,8 @@ def train(train_loader, model, criterion, optimizer, epoch, device):
     for i, (input, target) in enumerate(train_loader):
         # measure data loading time
 
+        # compute gradient and do SGD step
+        optimizer.zero_grad()
         data_time.update(time.time() - end)
 
         for m in args.modality:
@@ -367,7 +371,7 @@ def train(train_loader, model, criterion, optimizer, epoch, device):
         top5.update(prec5, batch_size)
 
         # compute gradient and do SGD step
-        optimizer.zero_grad()
+        # optimizer.zero_grad()
 
         loss.backward()
 

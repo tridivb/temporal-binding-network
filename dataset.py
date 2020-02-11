@@ -18,7 +18,7 @@ class TBNDataSet(data.Dataset):
                  visual_path=None, audio_path=None,
                  fps=29.94, resampling_rate=44000,
                  num_segments=3, transform=None,
-                 mode='train', use_audio_dict=True):
+                 mode='train', use_audio_dict=False):
         self.dataset = dataset
         if audio_path is not None:
             if not use_audio_dict:
